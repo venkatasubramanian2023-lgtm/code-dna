@@ -13,6 +13,8 @@ dependencies = [
     "neo4j>=5.14",
     "redis>=5.0",
     "cassandra-driver>=3.29",
+    # Python 3.12+ removed asyncore; the driver needs it when its libev C extension is absent (Windows)
+    "pyasyncore>=1.0.2; python_version >= '3.12'",
     "fastapi>=0.110",
     "uvicorn>=0.27",
     "requests>=2.31",
