@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+build/
+dist/
+
+# Local configuration and secrets
+.env
+
+# Cloned repositories (large; recreated by `python -m codedna ingest`)
+data/
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Redis snapshot files
+dump.rdb

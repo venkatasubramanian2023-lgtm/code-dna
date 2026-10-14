@@ -1,0 +1,73 @@
+# The four databases. Start them with:  docker compose up -d
+# Cassandra needs about a minute to become ready; `docker compose ps` shows "healthy" when it is.
+#
+# Optional: run the API in a container too:  docker compose --profile app up -d --build
+
+services:
+  mongo:
+    image: mongo:7
+    ports: ["27017:27017"]
+    volumes: ["mongo_data:/data/db"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  neo4j:
+    image: neo4j:5
+    environment:
+      NEO4J_AUTH: neo4j/codedna_pass
+    ports: ["7474:7474", "7687:7687"]
+    volumes: ["neo4j_data:/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p codedna_pass 'RETURN 1' || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  cassandra:
+    image: cassandra:4.1
+    ports: ["9042:9042"]
+    environment:
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 128M
+    volumes: ["cassandra_data:/var/lib/cassandra"]
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 40s
+
+  app:
+    profiles: ["app"]
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_PASS: codedna_pass
+      REDIS_HOST: redis
+      CASSANDRA_HOSTS: cassandra
+    volumes: ["clones:/data"]
+    depends_on:
+      mongo: {condition: service_healthy}
+      neo4j: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      cassandra: {condition: service_healthy}
+
+volumes:
+  mongo_data:
+  neo4j_data:
+  cassandra_data:
+  clones:
